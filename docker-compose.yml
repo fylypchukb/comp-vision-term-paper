@@ -1,0 +1,62 @@
+services:
+
+  # ---------------------------------------------------------------------------
+  # SQL Server 2022 Express
+  # The backend depends on this service being healthy before it starts.
+  # Data is persisted in a named volume so it survives container restarts.
+  # ---------------------------------------------------------------------------
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    # Health check: wait until sqlcmd can execute a query
+    # start_period gives SQL Server time to initialise on first run (~30 s)
+    healthcheck:
+      test: >
+        /opt/mssql-tools18/bin/sqlcmd
+        -S localhost -U sa -P "$$SA_PASSWORD"
+        -Q "SELECT 1" -No
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # FastAPI backend
+  # Starts only after SQL Server is healthy (database tables are created on startup).
+  # ---------------------------------------------------------------------------
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      mssql:
+        condition: service_healthy
+    # Allow the backend's init_db() retry loop to handle any residual DB warm-up
+    restart: on-failure
+
+  # ---------------------------------------------------------------------------
+  # CV module
+  # Requires camera access (device mapping only works on Linux hosts).
+  # On Windows/macOS, run the cv-module natively outside Docker for camera access.
+  # ---------------------------------------------------------------------------
+  cv-module:
+    build: ./cv-module
+    env_file:
+      - ./cv-module/.env
+    depends_on:
+      - backend
+    # Uncomment the lines below on a Linux host to pass the webcam through:
+    # devices:
+    #   - /dev/video0:/dev/video0
+
+volumes:
+  mssql_data:
