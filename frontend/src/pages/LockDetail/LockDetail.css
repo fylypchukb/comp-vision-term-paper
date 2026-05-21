@@ -1,0 +1,194 @@
+.detail-page {
+  padding: 2rem 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.25rem 0;
+  margin-bottom: 1.25rem;
+  transition: color 0.15s;
+}
+
+.back-btn:hover {
+  color: var(--text-primary);
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.detail-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem;
+}
+
+.detail-location {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.state-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.state-badge.locked {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+}
+
+.state-badge.unlocked {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--accent-green);
+}
+
+.state-badge.unknown {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* ── Two-column grid ─────────────────────────────────────────────── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 760px) {
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
+.detail-left,
+.detail-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Section card ────────────────────────────────────────────────── */
+.detail-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+/* ── Status panel ────────────────────────────────────────────────── */
+.status-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.live-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.watching-hint {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Mode row ────────────────────────────────────────────────────── */
+.mode-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.mode-hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0 0;
+}
+
+/* ── PIN display ─────────────────────────────────────────────────── */
+.pin-display {
+  margin-bottom: 1rem;
+}
+
+.pin-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.pin-seq {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.pin-chip {
+  font-size: 1.6rem;
+  padding: 0.2rem;
+  cursor: default;
+}
+
+.pin-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+/* ── Recording panel ─────────────────────────────────────────────── */
+.recording-panel {
+  margin-top: 0.75rem;
+  border: 1px dashed var(--accent-yellow);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.recording-hint {
+  font-size: 0.85rem;
+  color: var(--accent-yellow);
+  margin: 0 0 0.75rem;
+}
+
+/* ── Misc ────────────────────────────────────────────────────────── */
+.muted {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.detail-error {
+  color: var(--accent-red);
+  padding: 2rem;
+  text-align: center;
+}

@@ -10,7 +10,7 @@ Endpoints:
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
@@ -34,7 +34,20 @@ async def verify_gesture(
       - "match"    → PIN matched; lock state was toggled
       - "fail"     → mismatch; CV module resets its sequence buffer
       - "recorded" → gesture acknowledged in recording mode
+
+    Returns 404 if the lock_id is not found — this prevents FK constraint
+    violations and gives the CV module a clear signal to check its configuration.
     """
+    lock = await lock_service.get_lock(db, body.lock_id)
+    if lock is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Lock {body.lock_id} not found. "
+                "Check LOCK_ID in cv-module/.env matches a lock in the database."
+            ),
+        )
+
     return await pin_service.verify_gesture(
         db=db,
         lock_id=body.lock_id,

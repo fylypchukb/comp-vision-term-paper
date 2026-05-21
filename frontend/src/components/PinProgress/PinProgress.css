@@ -1,0 +1,71 @@
+.pin-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pin-dot {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: border-color 0.25s, background 0.25s, transform 0.25s;
+  background: var(--bg-secondary);
+}
+
+.pin-dot.filled {
+  background: var(--bg-card);
+  transform: scale(1.06);
+}
+
+.pin-dot.empty {
+  opacity: 0.4;
+}
+
+.dot-emoji {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.dot-index {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Status colours */
+.pin-progress.partial .pin-dot.filled {
+  border-color: var(--accent-blue);
+}
+
+.pin-progress.match .pin-dot.filled {
+  border-color: var(--accent-green);
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.pin-progress.fail .pin-dot.filled {
+  border-color: var(--accent-red);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.pin-progress.recording .pin-dot.filled {
+  border-color: var(--accent-yellow);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.pin-counter {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}

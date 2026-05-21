@@ -110,6 +110,13 @@ async def _handle_entry(
     if pin_config is None:
         logger.info("Lock %d has no PIN configured — returning fail", lock_id)
         await create_access_log_entry(db, lock_id, None, timestamp, "fail", sequence)
+        await manager.broadcast({
+            "event": "gesture_event",
+            "lock_id": lock_id,
+            "gesture": gesture,
+            "sequence": sequence,
+            "status": "fail",
+        })
         return GestureVerifyResponse(status="fail")
 
     stored: list[str] = json.loads(pin_config.sequence)
@@ -142,6 +149,16 @@ async def _handle_match(
 
     await set_lock_state(db, lock_id, new_state, changed_by=None, changed_at=timestamp)
     await create_access_log_entry(db, lock_id, None, timestamp, "success", sequence)
+
+    # Broadcast the completed sequence so the frontend can show all gestures
+    # (including the final one) with the "match" status before clearing.
+    await manager.broadcast({
+        "event": "gesture_event",
+        "lock_id": lock_id,
+        "gesture": sequence[-1] if sequence else "",
+        "sequence": sequence,
+        "status": "match",
+    })
 
     logger.info("Lock %d PIN matched — state → %s", lock_id, new_state)
     return GestureVerifyResponse(status="match", lock_state=new_state)

@@ -43,8 +43,8 @@ async def create_user(db: AsyncSession, username: str, role: str) -> User:
     Raises IntegrityError (HTTP 409) if username already exists.
     """
     user = User(username=username, role=role)
-    async with db.begin():
-        db.add(user)
+    db.add(user)
+    await db.commit()
     await db.refresh(user)
     return user
 
@@ -58,8 +58,9 @@ async def delete_user(db: AsyncSession, user_id: int) -> bool:
     user = await db.get(User, user_id)
     if user is None:
         return False
-    async with db.begin():
-        await db.delete(user)
+    # db.get() already autobegins a transaction — commit the open transaction
+    await db.delete(user)
+    await db.commit()
     return True
 
 
@@ -79,10 +80,23 @@ async def get_lock(db: AsyncSession, lock_id: int) -> Lock | None:
 
 
 async def create_lock(db: AsyncSession, data: LockCreate) -> Lock:
-    """Insert a new lock and return the created row."""
+    """
+    Insert a new lock and seed an initial 'locked' state row in the same
+    transaction so that GET /api/locks/{id}/state always returns 200.
+    """
     lock = Lock(name=data.name, location=data.location, mode=data.mode)
-    async with db.begin():
-        db.add(lock)
+    db.add(lock)
+    # Flush to obtain the auto-generated lock.id before we reference it in
+    # the initial state row — both rows commit together below.
+    await db.flush()
+    initial_state = LockState(
+        lock_id=lock.id,
+        state="locked",
+        changed_by=None,
+        changed_at=datetime.utcnow(),
+    )
+    db.add(initial_state)
+    await db.commit()
     await db.refresh(lock)
     return lock
 
@@ -99,14 +113,15 @@ async def update_lock(
     lock = await db.get(Lock, lock_id)
     if lock is None:
         return None
-    async with db.begin():
-        if data.name is not None:
-            lock.name = data.name
-        if data.location is not None:
-            lock.location = data.location
-        if data.mode is not None:
-            lock.mode = data.mode
-        db.add(lock)
+    # db.get() already autobegins a transaction — mutate the tracked object
+    # and commit the open transaction directly
+    if data.name is not None:
+        lock.name = data.name
+    if data.location is not None:
+        lock.location = data.location
+    if data.mode is not None:
+        lock.mode = data.mode
+    await db.commit()
     await db.refresh(lock)
     return lock
 
@@ -116,8 +131,8 @@ async def delete_lock(db: AsyncSession, lock_id: int) -> bool:
     lock = await db.get(Lock, lock_id)
     if lock is None:
         return False
-    async with db.begin():
-        await db.delete(lock)
+    await db.delete(lock)
+    await db.commit()
     return True
 
 
@@ -146,9 +161,8 @@ async def set_lock_mode(
     lock = await db.get(Lock, lock_id)
     if lock is None:
         return None
-    async with db.begin():
-        lock.mode = mode
-        db.add(lock)
+    lock.mode = mode
+    await db.commit()
     await db.refresh(lock)
     return lock
 
@@ -188,14 +202,19 @@ async def set_lock_state(
     """
     from ws_manager import manager  # imported here to avoid circular imports
 
+    # SQL Server datetime2 does not store timezone info — strip any tzinfo so
+    # the aioodbc driver does not send a datetimeoffset-formatted string.
+    raw_ts = changed_at or datetime.utcnow()
+    naive_ts = raw_ts.replace(tzinfo=None) if raw_ts.tzinfo is not None else raw_ts
+
     entry = LockState(
         lock_id=lock_id,
         state=state,
         changed_by=changed_by,
-        changed_at=changed_at or datetime.utcnow(),
+        changed_at=naive_ts,
     )
-    async with db.begin():
-        db.add(entry)
+    db.add(entry)
+    await db.commit()
     await db.refresh(entry)
 
     # Broadcast real-time event to all WebSocket clients
@@ -236,12 +255,14 @@ async def save_pin(
         user_id=user_id,
         sequence=json.dumps(sequence),
     )
-    async with db.begin():
-        # Delete old PIN (if any) within the same transaction
-        await db.execute(
-            delete(PinConfig).where(PinConfig.lock_id == lock_id)
-        )
-        db.add(new_pin)
+    # Delete the old PIN (if any) and insert the new one in one transaction.
+    # The session's autobegun transaction (from the preceding get_lock / get_user
+    # calls in the router) covers both operations — just commit at the end.
+    await db.execute(
+        delete(PinConfig).where(PinConfig.lock_id == lock_id)
+    )
+    db.add(new_pin)
+    await db.commit()
     await db.refresh(new_pin)
     logger.info("PIN saved for lock %d: %s", lock_id, sequence)
     return new_pin
@@ -259,8 +280,8 @@ async def delete_pin(db: AsyncSession, lock_id: int) -> bool:
     pin = result.scalar_one_or_none()
     if pin is None:
         return False
-    async with db.begin():
-        await db.delete(pin)
+    await db.delete(pin)
+    await db.commit()
     logger.info("PIN deleted for lock %d", lock_id)
     return True
 
@@ -290,14 +311,18 @@ async def create_access_log_entry(
     sequence: list[str],
 ) -> AccessLog:
     """Insert a new access log row for a verification attempt."""
+    # Strip timezone info — SQL Server datetime2 columns do not store tzinfo
+    # and the aioodbc driver rejects timezone-aware datetimes.
+    naive_ts = timestamp.replace(tzinfo=None) if timestamp.tzinfo is not None else timestamp
+
     entry = AccessLog(
         lock_id=lock_id,
         user_id=user_id,
-        timestamp=timestamp,
+        timestamp=naive_ts,
         result=result,
         gesture_sequence=json.dumps(sequence),
     )
-    async with db.begin():
-        db.add(entry)
+    db.add(entry)
+    await db.commit()
     await db.refresh(entry)
     return entry

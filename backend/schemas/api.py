@@ -115,9 +115,12 @@ class PinSave(BaseModel):
     @classmethod
     def validate_gestures(cls, v: list[str]) -> list[str]:
         """Ensure all gesture names are non-empty strings."""
+        # THUMBS_UP / THUMBS_DOWN removed: orientation-based detection is
+        # unreliable with simple Y/X axis checks (see gesture_classifier.py).
+        # CALL_ME / RING_PINKY removed: replaced by VULCAN and FINGER_GUN.
         valid = {
             "OPEN_PALM", "FIST", "INDEX_UP", "PEACE", "THREE", "FOUR",
-            "THUMBS_UP", "THUMBS_DOWN", "PINKY_UP", "OK", "ROCK", "CALL_ME",
+            "PINKY_UP", "OK", "ROCK", "VULCAN", "FINGER_GUN",
         }
         for g in v:
             if g not in valid:

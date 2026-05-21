@@ -44,6 +44,17 @@ services:
     restart: on-failure
 
   # ---------------------------------------------------------------------------
+  # React + Vite frontend (served by nginx in production)
+  # Proxies /api/* and /ws to the backend container.
+  # ---------------------------------------------------------------------------
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  # ---------------------------------------------------------------------------
   # CV module
   # Requires camera access (device mapping only works on Linux hosts).
   # On Windows/macOS, run the cv-module natively outside Docker for camera access.

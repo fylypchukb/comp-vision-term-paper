@@ -1,0 +1,72 @@
+.gesture-guide {
+  margin-top: 1rem;
+}
+
+.guide-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin: 0 0 0.6rem;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+}
+
+/* ── Individual gesture tile ─────────────────────────────────────── */
+.guide-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.45rem 0.2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  cursor: default;
+  transition: border-color 0.2s, background 0.2s;
+  position: relative;
+  min-width: 0;
+}
+
+.guide-item:hover {
+  border-color: var(--accent-yellow);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+/* Tiles that have been used at least once in the current sequence */
+.guide-item.used {
+  border-color: var(--accent-yellow);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.guide-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.guide-label {
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  padding: 0 2px;
+}
+
+/* Small counter badge showing how many times the gesture appears in the sequence */
+.guide-used-badge {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--accent-yellow);
+  line-height: 1;
+}
